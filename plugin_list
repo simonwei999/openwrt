@@ -14,50 +14,49 @@ opkg install /tmp/luci-app-taskplan_2.3.1-r20251023_all.ipk
 /etc/init.d/uhttpd restart
 
 
-01.安装 iStore 到 OpenWRT 官方固件
-只支持 x86_64 和 arm64 设备。
-opkg update || exit 1
-cd /tmp
-wget https://github.com/linkease/openwrt-app-actions/raw/main/applications/luci-app-systools/root/usr/share/systools/istore-reinstall.run
-chmod 755 istore-reinstall.run
-./istore-reinstall.run
-============================
-在盒子中使用 OpenWrt 系统及晶晨宝盒插件，需要一些必选软件包的支持，在自定义编译 OpenWrt时，请根据说明添加。在未编译晶晨宝盒的 OpenWrt 中使用一键脚本手动安装时，如果提示有缺少的依赖，请根据日志提示先安装依赖（系统 > 软件包 > 刷新列表 > 搜索对应的软件包 > 安装），然后再重试。
-手动安装
-如果你正在使用的 OpenWrt 没有这个插件，也可以手动安装。使用 SSH 登录 OpenWrt 系统的任意目录，或者在 系统菜单 → TTYD 终端 里，运行一键安装命令，即可自动下载安装本插件。
-curl -fsSL ophub.org/luci-app-amlogic | bash
-或者
-curl -fsSL git.io/luci-app-amlogic | bash
-============================
+
+==========================================
 关机功能插件 :
 https://github.com/sirpdboy/luci-app-poweroffdevice/releases/download/v2.6/luci-app-poweroffdevice_2-r6_all.ipk
-===============================
+==========================================
 上网时间控制js版:
-https://github.com/sirpdboy/luci-app-timecontrol/releases/download/v3.2.1/luci-app-timecontrol_3.2.1-r20251227_all.ipk
-================
+https://github.com/sirpdboy/luci-app-timecontrol/releases/download/v3.1.5/luci-app-nft-timecontrol_3.1.5-r20251129_all.ipk
+==========================================
 计划任务插件（原定时设置） : 
 https://github.com/sirpdboy/luci-app-taskplan/releases/download/v2.3.1/luci-app-taskplan_2.3.1-r20251023_all.ipk
-========================
+==========================================
 kucat酷猫主题：
 https://github.com/sirpdboy/luci-theme-kucat/releases/download/v3.2.7/luci-theme-kucat_3.2.7-r20260114_all.ipk
-========================
+https://github.com/sirpdboy/luci-app-kucat-config/releases/download/v2.1.5/luci-app-kucat-config_2.1.5-r20260114_all.ipk
+==========================================
 Openclash
 https://github.com/vernesong/OpenClash/releases/download/v0.47.046/luci-app-openclash_0.47.046_all.ipk
-====================================
+==========================================
 Zerotier
 
-=======================================
+==========================================
 USB打印服务器
 
-=======================================
+==========================================
 访问控制：
 https://github.com/k-szuster/luci-access-control/releases/download/0.4.3sk/luci-app-access-control_0.4.3_all.ipk
-=========================================
+==========================================
 高级卸载：
 插件下载：https://www.vumstar.com/10040/
 ==========================================
 文件传输：
 
-=============================================
+==========================================
+
+定时限速：
+https://github.com/sirpdboy/luci-app-eqosplus/releases/download/v1.3.0/luci-app-eqosplus_1.3.0-r20251128_all.ipk
+==========================================
+
+
+==========================================
+
+==========================================
+==========================================
+
 
 
