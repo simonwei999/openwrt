@@ -22,3 +22,16 @@ docker run -d \
   -e CUPSADMIN="admin" \
   -e CUPSPASSWORD="admin" \
   ydkn/cups:latest
+
+家里immortalwrt nvme需要安装的docker
+docker run -d \
+  --name=cups \
+  --net=host \
+  --privileged \
+  -e CUPS_USER_ADMIN=admin \
+  -e CUPS_USER_PASSWORD=123456 \
+  -v /etc/cups:/etc/cups \
+  -v /var/log/cups:/var/log/cups \
+  -v /dev:/dev \
+  --restart=unless-stopped \
+  ydkn/cups:latest
