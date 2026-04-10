@@ -11,18 +11,6 @@ docker run -d \
   -e CUPSPASSWORD="admin" \
   chuckcharlie/cups-avahi-airprint:latest
 
-docker run -d \
-  --name=cups \
-  --restart=unless-stopped \
-  --net=host \
-  --privileged \
-  -v /var/run/dbus:/var/run/dbus \
-  -v /opt/docker/cups/config:/etc/cups \
-  -v /dev/bus/usb:/dev/bus/usb \
-  -e CUPSADMIN="admin" \
-  -e CUPSPASSWORD="admin" \
-  ydkn/cups:latest
-
 家里immortalwrt nvme需要安装的docker
 docker run -d \
   --name=cups \
@@ -33,5 +21,6 @@ docker run -d \
   -v /etc/cups:/etc/cups \
   -v /var/log/cups:/var/log/cups \
   -v /dev:/dev \
+  -v /var/run/dbus:/var/run/dbus \
   --restart=unless-stopped \
   ydkn/cups:latest
