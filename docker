@@ -1,3 +1,19 @@
+docker stop cups && docker rm cups
+
+docker run -d \
+  --name=cups \
+  --net=host \
+  --privileged \
+  -e CUPSADMIN=admin \
+  -e CUPSPASSWORD=123456 \
+  -e TZ=Asia/Shanghai \
+  -e AIRPRINT_SHARE=yes \
+  -e AVAHI_DOMAIN=local \
+  -e CUPS_ENV=production \
+  -v /var/run/dbus:/var/run/dbus \
+  -v /dev/bus/usb:/dev/bus/usb \
+  --restart=unless-stopped \
+  chuckcharlie/cups-avahi-airprint:latest
 
 
 家里immortalwrt nvme需要安装的docker
