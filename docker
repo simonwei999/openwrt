@@ -14,3 +14,27 @@ docker run -d \
   -v /var/run/dbus:/var/run/dbus \
   --restart=unless-stopped \
   chuckcharlie/cups-avahi-airprint:latest
+
+
+
+
+# 放行CUPS 631端口
+uci add firewall rule
+uci set firewall.@rule[-1].name='CUPS'
+uci set firewall.@rule[-1].src='lan'
+uci set firewall.@rule[-1].target='ACCEPT'
+uci set firewall.@rule[-1].proto='tcp'
+uci set firewall.@rule[-1].dest_port='631'
+uci commit firewall
+
+# 放行mDNS 5353端口（AirPrint发现核心）
+uci add firewall rule
+uci set firewall.@rule[-1].name='mDNS'
+uci set firewall.@rule[-1].src='lan'
+uci set firewall.@rule[-1].target='ACCEPT'
+uci set firewall.@rule[-1].proto='udp'
+uci set firewall.@rule[-1].dest_port='5353'
+uci commit firewall
+
+# 重启防火墙生效
+/etc/init.d/firewall restart
