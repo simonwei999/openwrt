@@ -1,0 +1,39 @@
+一、手机 PrintHand 两种可用方式总结
+方式 1：SSH 隧道（你已实测成功）
+Termux 运行：
+plaintext
+ssh -L 8631:127.0.0.1:631 root@1190vm66237cm.vicp.fun -p 55099
+PrintHand 设置：
+类型：IPP
+IP：127.0.0.1
+端口：8631
+小路：printers/Canon_G3000_series@openwrt
+结果：能打印，会提示内部错误（APP BUG）
+方式 2：不使用隧道，直连花生壳 55254
+不用开 Termux，直接配置 PrintHand：
+类型：IPP
+IP：1190vm66237cm.vicp.fun
+端口：55254
+小路：printers/Canon_G3000_series@openwrt
+结果：同样能打印，同样可能提示内部错误
+（因为网页不能访问，但 IPP 打印协议能通）
+二、上海电脑两种方式
+方式 1：SSH 隧道
+PowerShell 运行：
+plaintext
+ssh -L 8631:127.0.0.1:631 root@1190vm66237cm.vicp.fun -p 55099
+添加打印机地址：
+plaintext
+ipp://127.0.0.1:8631/printers/Canon_G3000_series@openwrt
+方式 2：直连花生壳（不用隧道）
+添加打印机地址：
+plaintext
+ipp://1190vm66237cm.vicp.fun:55254/printers/Canon_G3000_series@openwrt
+最关键的一句话总结
+网页打不开 域名:55254 是正常的，因为花生壳不支持 HTTP 穿透
+但 IPP 打印协议不受影响，可以直接用 55254 打印
+隧道方式 / 直连方式 都能用
+PrintHand 报 “内部错误” 是 APP 问题，不影响打印
+你以后最简单用法
+想省事：手机直接连 域名:55254，不用开 Termux
+想更稳：用 SSH 隧道 8631
