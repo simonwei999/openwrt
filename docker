@@ -1,5 +1,5 @@
 docker stop cups && docker rm cups
-
+家里N100 immortal SSH运行命令安装airprint:
 docker run -d \
   --name=cups \
   --net=host \
@@ -10,29 +10,12 @@ docker run -d \
   -e AIRPRINT_SHARE=yes \
   -e AVAHI_DOMAIN=local \
   -e CUPS_ENV=production \
-  -v /var/run/dbus:/var/run/dbus \
-  -v /dev/bus/usb:/dev/bus/usb \
-  --restart=unless-stopped \
-  chuckcharlie/cups-avahi-airprint:latest
-
-
-家里immortalwrt nvme需要安装的docker
-docker run -d \
-  --name=cups \
-  --net=host \
-  --privileged \
-  -e CUPSADMIN=admin \
-  -e CUPSPASSWORD=123456 \
-  -e TZ=Asia/Shanghai \
   -v /etc/cups:/etc/cups \
   -v /var/log/cups:/var/log/cups \
   -v /dev/bus/usb:/dev/bus/usb \
   -v /var/run/dbus:/var/run/dbus \
   --restart=unless-stopped \
   chuckcharlie/cups-avahi-airprint:latest
-
-
-
 
 # 放行CUPS 631端口
 uci add firewall rule
@@ -54,3 +37,49 @@ uci commit firewall
 
 # 重启防火墙生效
 /etc/init.d/firewall restart
+
+
+
+安装花生壳docker:
+# 一步步手把手操作，直接复制粘贴就行（适配 N100 ImmortalWrt）
+## 第一步：停止并删掉旧的花生壳容器
+SSH 登录路由器，逐条执行：
+docker stop oray
+docker rm oray
+
+## 第二步：创建本地持久化目录
+mkdir -p /etc/oray
+
+## 第三步：新建带挂载+开机自启的花生壳容器
+docker run -d \
+--name oray \
+--restart always \
+-v /etc/oray:/etc/oray \
+--net bridge \
+phddns-bestoray
+
+## 第四步：查看花生壳 SN 码
+docker exec -it oray phddns status
+复制输出里的 **SN 编号** 备用。
+
+## 第五步：重新激活绑定
+1. 电脑/手机浏览器打开：  
+`http://b.oray.com`
+2. 登录方式选 **SN登录**
+3. 填入刚才复制的 SN，默认密码：`admin`
+4. 扫码绑定你自己的花生壳账号，完成激活。
+
+## 第六步：验证两件事
+1. 看容器是否有挂载
+docker inspect oray | grep Mounts -A 10
+能看到 `/etc/oray` 挂载信息，就代表**持久化成功**，以后重启SN不变。
+
+2. 去花生壳后台看设备状态
+现在会显示**在线**，端口映射恢复正常。
+
+## 补充说明
+1. 以后重启 N100 路由器，**容器会自动启动，不用手动开**；
+2. 配置、SN、绑定信息都存在 `/etc/oray` 目录，再也不会重启变离线；
+3. 你OpenWrt里**网关端口继续保持不勾选**，更安全。
+
+你执行完有报错或者看不到SN，直接把返回信息发我，我帮你排查。
