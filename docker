@@ -17,6 +17,9 @@ docker run -d \
   ydkn/cups
 
  备用 chuckcharlie/cups-avahi-airprint:latest
+Canon_G3000_series@openwrt
+
+
 
 # 放行CUPS 631端口
 uci add firewall rule
