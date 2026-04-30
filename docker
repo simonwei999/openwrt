@@ -1,21 +1,22 @@
 docker stop cups && docker rm cups
 家里N100 immortal SSH运行命令安装airprint:
+Gemini提供的安装cups镜像
+mkdir -p ~/cups/config
+mkdir -p ~/cups/services
 docker run -d \
-  --name=cups \
+  --name cups \
+  --restart always \
   --net=host \
   --privileged \
-  -e CUPSADMIN=admin \
-  -e CUPSPASSWORD=123456 \
-  -e TZ=Asia/Shanghai \
-  -e AIRPRINT_SHARE=yes \
-  -e AVAHI_DOMAIN=local \
-  -e CUPS_ENV=production \
-  -v /etc/cups:/etc/cups \
-  -v /var/log/cups:/var/log/cups \
-  -v /dev/bus/usb:/dev/bus/usb \
   -v /var/run/dbus:/var/run/dbus \
-  --restart=unless-stopped \
-  chuckcharlie/cups-avahi-airprint:latest
+  -v ~/cups/config:/etc/cups \
+  -v ~/cups/services:/etc/avahi/services \
+  --device /dev/bus/usb:/dev/bus/usb \
+  -e ADMIN_USER=admin \
+  -e ADMIN_PASSWORD=admin \
+  ydkn/cups
+
+ 备用 chuckcharlie/cups-avahi-airprint:latest
 
 # 放行CUPS 631端口
 uci add firewall rule
@@ -84,21 +85,6 @@ docker inspect oray | grep Mounts -A 10
 
 你执行完有报错或者看不到SN，直接把返回信息发我，我帮你排查。
 
-Gemini提供的安装cups镜像
-mkdir -p ~/cups/config
-mkdir -p ~/cups/services
-docker run -d \
-  --name cups \
-  --restart always \
-  --net=host \
-  --privileged \
-  -v /var/run/dbus:/var/run/dbus \
-  -v ~/cups/config:/etc/cups \
-  -v ~/cups/services:/etc/avahi/services \
-  --device /dev/bus/usb:/dev/bus/usb \
-  -e ADMIN_USER=admin \
-  -e ADMIN_PASSWORD=admin \
-  ydkn/cups
 
 
 docker run -d \
