@@ -84,6 +84,22 @@ docker inspect oray | grep Mounts -A 10
 
 你执行完有报错或者看不到SN，直接把返回信息发我，我帮你排查。
 
+Gemini提供的安装cups镜像
+mkdir -p ~/cups/config
+mkdir -p ~/cups/services
+docker run -d \
+  --name cups \
+  --restart always \
+  --net=host \
+  --privileged \
+  -v /var/run/dbus:/var/run/dbus \
+  -v ~/cups/config:/etc/cups \
+  -v ~/cups/services:/etc/avahi/services \
+  --device /dev/bus/usb:/dev/bus/usb \
+  -e ADMIN_USER=admin \
+  -e ADMIN_PASSWORD=admin \
+  ydkn/cups
+
 
 docker run -d \
   --name phddns \
