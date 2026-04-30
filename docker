@@ -83,3 +83,11 @@ docker inspect oray | grep Mounts -A 10
 3. 你OpenWrt里**网关端口继续保持不勾选**，更安全。
 
 你执行完有报错或者看不到SN，直接把返回信息发我，我帮你排查。
+
+
+docker run -d \
+  --name phddns \
+  --restart always \
+  --net host \
+  -v /mnt/sda1/phddns:/etc/phddns \
+  oray/phddns
