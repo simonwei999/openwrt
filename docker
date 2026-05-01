@@ -42,6 +42,19 @@ uci commit firewall
 # 重启防火墙生效
 /etc/init.d/firewall restart
 
+1. 手动创建文件夹
+mkdir -p /etc/hotplug.d/usb/
+
+2.脚本
+cat <<EOF > /etc/hotplug.d/usb/10-printer-restart
+#!/bin/sh
+if [ "\$ACTION" = "add" ] && [ "\$PRODUCT" = "4a9/1794/306" ]; then
+    logger "检测到打印机上线 (v306)，正在重启 CUPS 容器..."
+    docker restart cups
+fi
+EOF
+3. 赋予执行权限
+chmod +x /etc/hotplug.d/usb/10-printer-restart
 
 
 安装花生壳docker:
