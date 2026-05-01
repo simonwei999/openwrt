@@ -42,6 +42,7 @@ uci commit firewall
 # 重启防火墙生效
 /etc/init.d/firewall restart
 
+打印机自动关机后，再开机，需要重启docker容器才行，具体步骤如下：
 1. 手动创建文件夹
 mkdir -p /etc/hotplug.d/usb/
 
@@ -57,27 +58,12 @@ EOF
 chmod +x /etc/hotplug.d/usb/10-printer-restart
 
 
-安装花生壳docker:
-# 一步步手把手操作，直接复制粘贴就行（适配 N100 ImmortalWrt）
-## 第一步：停止并删掉旧的花生壳容器
-SSH 登录路由器，逐条执行：
-docker stop oray
-docker rm oray
 
-## 第二步：创建本地持久化目录
-mkdir -p /etc/oray
 
-## 第三步：新建带挂载+开机自启的花生壳容器
-docker run -d \
---name oray \
---restart always \
--v /etc/oray:/etc/oray \
---net bridge \
-phddns-bestoray
 
 ## 第四步：查看花生壳 SN 码
-docker exec -it oray phddns status
-复制输出里的 **SN 编号** 备用。
+docker exec -it phddns phddns status
+复制输出里的 **SN 编号** 备用。 SN: oray5137***b71c7  (*为账号的后三位）
 
 ## 第五步：重新激活绑定
 1. 电脑/手机浏览器打开：  
