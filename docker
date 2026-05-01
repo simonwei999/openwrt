@@ -19,8 +19,6 @@ docker run -d \
  备用 chuckcharlie/cups-avahi-airprint:latest
 Canon_G3000_series@openwrt
 
-
-
 # 放行CUPS 631端口
 uci add firewall rule
 uci set firewall.@rule[-1].name='CUPS'
@@ -59,7 +57,13 @@ chmod +x /etc/hotplug.d/usb/10-printer-restart
 
 
 
-
+花生壳的安装命令
+docker run -d \
+  --name phddns \
+  --restart always \
+  --net host \
+  -v /etc/oray:/etc/oray \
+  phddns-bestoray:latest
 
 ## 第四步：查看花生壳 SN 码
 docker exec -it phddns phddns status
@@ -89,9 +93,3 @@ docker inspect oray | grep Mounts -A 10
 
 
 
-docker run -d \
-  --name phddns \
-  --restart always \
-  --net host \
-  -v /mnt/sda1/phddns:/etc/phddns \
-  oray/phddns
