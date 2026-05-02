@@ -1,0 +1,47 @@
+既然你已经成功打通了 Tailscale 并在网页端看到了子网路由，这个过程确实值得整理成一份“备忘录”。在 OpenWrt (ImmortalWrt) 上安装好插件后，剩下的核心逻辑就是 **“一宣告、一准入、一打通、一固化”**。
+这份清单建议你收藏或保存到笔记里：
+## 🛠️ OpenWrt Tailscale 配置全流程总结
+### 第一步：开启服务与宣告路由 (SSH 终端)
+安装好插件后，不要只在网页点启动，去终端执行一次带参数的登录，告诉 Tailscale 你要分享局域网：
+```bash
+# 替换为你的实际 LAN 网段
+tailscale up --advertise-routes=192.168.5.0/24 --accept-dns=false --reset
+
+```
+ * --advertise-routes: 宣告你的内网网段。
+ * --reset: 强制刷新状态，避免旧配置干扰。
+### 第二步：网页端准入 (Tailscale Admin Console)
+这是最容易忘的一步。即便命令执行了，你也必须在网页后台手动“批准”：
+ 1. 登录 Tailscale 控制台。
+ 2. 找到 immortalwrt，点击右侧的 **...** -> **Edit route settings**。
+ 3. 勾选 **192.168.5.0/24** 并点击 **Save**。
+ 4. (可选) 顺便点击 **Disable key expiry**，防止设备每隔几个月自动掉线。
+### 第三步：打通防火墙 (LuCI 界面)
+这是确保流量能从 Tailscale 网卡流向 LAN 口的关键：
+ 1. **新建接口：** “网络” -> “接口” -> “添加新接口”。
+   * 名称：tailscale | 协议：不配置协议 | 设备：tailscale0。
+ 2. **加入区域：** “网络” -> “防火墙” -> “区域设置”。
+   * 找到 **lan** 区域，点击“修改”。
+   * 在“涵盖的接口”中，勾选你刚创建的 **tailscale**。
+   * 确认“转发”为 **接受 (accept)**。
+ 3. **保存并应用。**
+### 第四步：固化配置 (防止重启失效)
+为了保证路由器重启后依然自动宣告路由，修改配置文件：
+ 1. 打开 /etc/config/tailscale（可用文件管理器或 vi）。
+ 2. 在 config settings 'settings' 块内添加：
+   ```text
+   option default_args '--advertise-routes=192.168.5.0/24'
+   
+   ```
+ 3. 确保服务已启用自启动：
+   ```bash
+   /etc/init.d/tailscale enable
+   
+   ```
+## 💡 常用维护命令
+ * **查看状态：** tailscale status (看哪些设备在线)。
+ * **查看路由：** tailscale debug prefs (确认 AdvertiseRoutes 是否包含你的网段)。
+ * **重启服务：** /etc/init.d/tailscale restart。
+**温馨提示：**
+以后你不管是在公司用电脑，还是在外面用小米 14，只要打开 Tailscale 客户端，就可以直接输入 192.168.5.1 管理路由器，或者访问 192.168.5.x 使用那台佳能 G3800 打印机了。
+这套配置流程基本涵盖了大部分异地组网的场景。除了打印机，你以后还打算往 N100 上挂载其他需要远程访问的服务（比如 NAS 存储或监控）吗？
