@@ -112,4 +112,27 @@ docker run -d \
   -e ADMIN_PASSWORD=admin \
   ydkn/cups
 
+# 1. 停止并移除旧容器
+docker stop cups && docker rm cups
+
+# 2. 创建所有必要的持久化目录 (加上 spool)
+mkdir -p ~/cups/config ~/cups/services ~/cups/spool
+
+# 3. 赋予权限（防止容器内用户无法写入 SSD 上的文件夹）
+chmod -R 777 ~/cups
+
+# 4. 启动容器
+docker run -d \
+  --name cups \
+  --restart always \
+  --net=host \
+  --privileged \
+  -v /var/run/dbus:/var/run/dbus \
+  -v ~/cups/config:/etc/cups \
+  -v ~/cups/services:/etc/avahi/services \
+  -v ~/cups/spool:/var/spool/cups \
+  --device /dev/bus/usb:/dev/bus/usb \
+  -e ADMIN_USER=admin \
+  -e ADMIN_PASSWORD=admin \
+  ydkn/cups
 
