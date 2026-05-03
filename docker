@@ -91,5 +91,25 @@ docker inspect oray | grep Mounts -A 10
 
 你执行完有报错或者看不到SN，直接把返回信息发我，我帮你排查。
 
+# 先停止并删除旧容器
+docker stop cups && docker rm cups
+
+# 确保创建了 spool 目录
+mkdir -p ~/cups/spool
+
+# 运行修正后的命令
+docker run -d \
+  --name cups \
+  --restart always \
+  --net=host \
+  --privileged \
+  -v /var/run/dbus:/var/run/dbus \
+  -v ~/cups/config:/etc/cups \
+  -v ~/cups/services:/etc/avahi/services \
+  -v ~/cups/spool:/var/spool/cups \
+  --device /dev/bus/usb:/dev/bus/usb \
+  -e ADMIN_USER=admin \
+  -e ADMIN_PASSWORD=admin \
+  ydkn/cups
 
 
