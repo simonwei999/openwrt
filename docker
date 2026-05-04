@@ -1,8 +1,20 @@
-docker stop cups && docker rm cups
 家里N100 immortal SSH运行命令安装airprint:
 Gemini提供的安装cups镜像
+# 1. 停止并移除旧容器
+docker stop cups && docker rm cups
+
+# 2. 创建所有必要的持久化目录 (加上 spool)
+mkdir -p ~/cups/config ~/cups/services ~/cups/spool
+
+or 确保创建了目录
+mkdir -p ~/cups/spool
 mkdir -p ~/cups/config
 mkdir -p ~/cups/services
+
+# 3. 赋予权限（防止容器内用户无法写入 SSD 上的文件夹）
+chmod -R 777 ~/cups
+
+# 4. 启动容器
 docker run -d \
   --name cups \
   --restart always \
@@ -11,13 +23,13 @@ docker run -d \
   -v /var/run/dbus:/var/run/dbus \
   -v ~/cups/config:/etc/cups \
   -v ~/cups/services:/etc/avahi/services \
+  -v ~/cups/spool:/var/spool/cups \
   --device /dev/bus/usb:/dev/bus/usb \
   -e ADMIN_USER=admin \
   -e ADMIN_PASSWORD=admin \
   ydkn/cups
 
- 备用 chuckcharlie/cups-avahi-airprint:latest
-Canon_G3000_series@openwrt
+备用 chuckcharlie/cups-avahi-airprint:latest
 
 # 放行CUPS 631端口
 uci add firewall rule
@@ -56,7 +68,7 @@ EOF
 chmod +x /etc/hotplug.d/usb/10-printer-restart
 
 
-
+==================================================================================
 花生壳的安装命令
 docker run -d \
   --name phddns \
@@ -90,49 +102,3 @@ docker inspect oray | grep Mounts -A 10
 3. 你OpenWrt里**网关端口继续保持不勾选**，更安全。
 
 你执行完有报错或者看不到SN，直接把返回信息发我，我帮你排查。
-
-# 先停止并删除旧容器
-docker stop cups && docker rm cups
-
-# 确保创建了 spool 目录
-mkdir -p ~/cups/spool
-
-# 运行修正后的命令
-docker run -d \
-  --name cups \
-  --restart always \
-  --net=host \
-  --privileged \
-  -v /var/run/dbus:/var/run/dbus \
-  -v ~/cups/config:/etc/cups \
-  -v ~/cups/services:/etc/avahi/services \
-  -v ~/cups/spool:/var/spool/cups \
-  --device /dev/bus/usb:/dev/bus/usb \
-  -e ADMIN_USER=admin \
-  -e ADMIN_PASSWORD=admin \
-  ydkn/cups
-
-# 1. 停止并移除旧容器
-docker stop cups && docker rm cups
-
-# 2. 创建所有必要的持久化目录 (加上 spool)
-mkdir -p ~/cups/config ~/cups/services ~/cups/spool
-
-# 3. 赋予权限（防止容器内用户无法写入 SSD 上的文件夹）
-chmod -R 777 ~/cups
-
-# 4. 启动容器
-docker run -d \
-  --name cups \
-  --restart always \
-  --net=host \
-  --privileged \
-  -v /var/run/dbus:/var/run/dbus \
-  -v ~/cups/config:/etc/cups \
-  -v ~/cups/services:/etc/avahi/services \
-  -v ~/cups/spool:/var/spool/cups \
-  --device /dev/bus/usb:/dev/bus/usb \
-  -e ADMIN_USER=admin \
-  -e ADMIN_PASSWORD=admin \
-  ydkn/cups
-
