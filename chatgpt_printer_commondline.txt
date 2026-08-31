@@ -1,0 +1,44 @@
+# 1. 关闭 IPv6（如果 Docker 又出现 IPv6 网络问题）
+sysctl -w net.ipv6.conf.all.disable_ipv6=1
+sysctl -w net.ipv6.conf.default.disable_ipv6=1
+
+# 2. Docker 禁用 IPv6
+cat > /etc/docker/daemon.json <<'EOF'
+{
+  "ipv6": false,
+  "ip6tables": false
+}
+EOF
+
+# 3. 重启 Docker
+/etc/init.d/dockerd restart
+sleep 5
+
+# 4. 下载 AirPrint CUPS 镜像
+docker pull chuckcharlie/cups-avahi-airprint:latest
+
+# 5. 清理旧容器/配置
+docker rm -f cups 2>/dev/null
+rm -rf ~/cups
+mkdir -p ~/cups
+chmod 777 ~/cups
+
+# 6. 创建 CUPS + AirPrint
+docker run -d \
+  --name cups \
+  --restart unless-stopped \
+  --net=host \
+  --privileged \
+  -v ~/cups:/config \
+  -v /dev/bus/usb:/dev/bus/usb \
+  -e CUPSADMIN=admin \
+  -e CUPSPASSWORD=admin \
+  -e AVAHI_HOSTNAME=cups-airprint \
+  chuckcharlie/cups-avahi-airprint:latest
+
+# 7. 检查
+docker ps
+docker logs cups --tail 100
+
+# 8. 检查 USB
+docker exec cups lsusb
