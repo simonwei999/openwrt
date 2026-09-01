@@ -1,5 +1,5 @@
 # 1. 更新软件源
-opkg update
+opkg update 
 
 # 2. 安装 Tailscale
 opkg install tailscale
@@ -31,3 +31,5 @@ ping -c 3 192.168.5.1
 
 # 10. 检查 LuCI
 wget -O - http://192.168.5.1/ 2>&1 | head -20
+
+别忘了管理后台批准192.168.5.0/24 路由
