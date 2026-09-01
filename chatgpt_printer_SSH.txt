@@ -1,0 +1,426 @@
+我帮你整理成一份**《ImmortalWrt + Docker + CUPS + AirPrint 打印服务器安装记录》**，以后重新安装 ImmortalWrt 或 Docker 时，可以直接照着执行。
+我按照你这次实际成功的过程整理，并把踩坑点也写进去。
+
+ImmortalWrt Docker + CUPS + AirPrint 安装文档
+一、环境说明
+
+设备：
+ImmortalWrt25.12.1 efi ext4
+Docker
+USB 打印机：Canon G3000 series
+Docker 镜像：
+chuckcharlie/cups-avahi-airprint:latest
+
+目标：
+ImmortalWrt 作为打印服务器
+支持：
+CUPS Web 管理
+USB 打印
+AirPrint
+局域网发现
+
+二、安装 Docker 前准备
+1. 安装 Docker
+2.确认 dockerd：
+/etc/init.d/dockerd status
+
+三、非常重要：设置 Docker 数据目录问题
+
+ImmortalWrt 默认 Docker 可能使用：
+/var/lib/docker
+
+甚至：
+/tmp/lib/docker
+
+如果在 tmpfs：
+重启后：
+镜像消失
+容器消失
+
+1. 修改 Docker 数据目录
+
+创建配置：
+mkdir -p /etc/docker
+
+编辑：
+cat > /etc/docker/daemon.json <<'EOF'
+{
+  "data-root": "/opt/docker",
+  "ipv6": false,
+  "ip6tables": false
+}
+EOF
+2. 清理旧 Docker 临时配置
+
+停止 Docker：
+
+/etc/init.d/dockerd stop
+
+如果进程没有退出：
+查看：
+
+ps | grep dockerd
+
+强制结束：
+
+kill -9 PID
+
+例如：
+
+kill -9 2366
+
+删除临时配置：
+
+rm -rf /tmp/dockerd
+
+3. 启动 Docker
+
+/etc/init.d/dockerd start
+
+确认：
+
+docker info | grep "Docker Root Dir"
+
+正确结果：
+
+Docker Root Dir: /opt/docker
+
+四、测试 Docker 是否正常
+测试拉取镜像：
+docker pull hello-world
+
+运行：
+docker run hello-world
+
+确认：
+docker images
+
+如果docker出现镜像拉去不了，可能有ipv6的问题，按照以下内容处理
+
+# 1. 关闭 IPv6（如果 Docker 又出现 IPv6 网络问题）
+sysctl -w net.ipv6.conf.all.disable_ipv6=1
+sysctl -w net.ipv6.conf.default.disable_ipv6=1
+
+# 2. Docker 禁用 IPv6
+cat > /etc/docker/daemon.json <<'EOF'
+{
+  "ipv6": false,
+  "ip6tables": false
+}
+EOF
+
+# 3. 重启 Docker
+/etc/init.d/dockerd restart
+sleep 5
+
+
+# 4. 下载 AirPrint CUPS 镜像
+docker pull chuckcharlie/cups-avahi-airprint:latest
+
+五、创建 CUPS 数据目录
+
+为了以后删除容器不丢配置：
+
+mkdir -p /opt/cups/config
+mkdir -p /opt/cups/log
+mkdir -p /opt/cups/spool
+
+目录作用：
+/opt/cups/config
+    CUPS配置
+
+/opt/cups/log
+    日志
+
+/opt/cups/spool
+    打印任务缓存
+    
+六、确认 USB 打印机已连接
+执行：（应该在第七步后执行测试该命令）
+docker exec cups lsusb
+
+这次 Canon G3000 的关键 USB ID 是：
+04a9:1794
+
+
+七、创建 CUPS + AirPrint 容器
+
+删除旧容器：
+
+docker rm -f cups
+
+创建：
+
+docker run -d \
+--name cups \
+--restart always \
+--network host \
+--privileged \
+-e CUPSADMIN=admin \
+-e CUPSPASSWORD=admin \
+-v /opt/cups/config:/etc/cups \
+-v /opt/cups/log:/var/log/cups \
+-v /opt/cups/spool:/var/spool/cups \
+--device /dev/bus/usb:/dev/bus/usb \
+chuckcharlie/cups-avahi-airprint:latest
+
+参数说明：
+
+参数	作用
+--restart always	重启自动启动
+--network host	使用宿主网络，AirPrint需要
+--privileged	允许访问USB
+-v config	保存CUPS配置
+-v log	保存日志
+-v spool	保存打印任务
+--device USB	映射打印机
+八、检查 CUPS 是否运行
+
+查看容器：
+docker ps
+
+正常：
+cups   Up
+
+查看日志：
+docker logs cups --tail 50
+
+正常看到：
+Server startup complete
+exec /usr/sbin/cupsd -f
+
+如果密码有问题，登录192.168.5.1：631 Administration有问题，则按照下述命令重置密码，
+docker exec cups sh -c 'echo "admin:admin" | chpasswd'
+如果防火墙有问题，按照下面的设置
+
+我们之前配置了 LAN → CUPS 631：
+
+uci add firewall rule
+uci set firewall.@rule[-1].name='CUPS'
+uci set firewall.@rule[-1].src='lan'
+uci set firewall.@rule[-1].target='ACCEPT'
+uci set firewall.@rule[-1].proto='tcp'
+uci set firewall.@rule[-1].dest_port='631'
+uci commit firewall
+
+mDNS：
+
+uci add firewall rule
+uci set firewall.@rule[-1].name='mDNS'
+uci set firewall.@rule[-1].src='lan'
+uci set firewall.@rule[-1].target='ACCEPT'
+uci set firewall.@rule[-1].proto='udp'
+uci set firewall.@rule[-1].dest_port='5353'
+uci commit firewall
+
+最后：
+
+/etc/init.d/firewall restart
+
+
+九、访问 CUPS
+
+浏览器：
+
+http://ImmortalWrt地址:631
+
+例如：
+
+http://192.168.5.1:631
+
+用户名：
+
+admin
+
+密码：
+
+admin
+十、确认打印机
+
+进入容器：
+
+docker exec -it cups sh
+
+查看设备：
+
+lpstat -v
+
+正常：
+
+device for Canon_G3000_series:
+usb://Canon/G3000
+
+查看打印机状态：
+
+lpstat -p
+
+正常：
+
+printer Canon_G3000_series is idle
+十一、确认 CUPS 端口
+
+ImmortalWrt：
+
+netstat -lntp | grep 631
+
+正常：
+
+0.0.0.0:631 LISTEN cupsd
+十二、确认 AirPrint
+
+因为使用：
+
+chuckcharlie/cups-avahi-airprint
+
+已经包含：
+
+avahi
+mDNS
+AirPrint
+
+查看：
+
+docker logs cups | grep -i avahi
+
+正常：
+
+D-Bus and Avahi ready
+Service established
+
+手机：
+
+iPhone：
+
+照片
+→ 分享
+→ 打印
+→ 选择 Canon G3000
+十三、重启后检查流程
+
+重启：
+
+reboot
+
+回来：
+
+1. Docker目录
+docker info | grep "Docker Root Dir"
+
+必须：
+
+/opt/docker
+2. Docker运行
+docker ps
+
+应该看到：
+
+cups Up
+3. 打印机
+docker exec cups lpstat -p
+
+应该：
+
+idle
+十四、以后重新安装最短流程
+
+如果系统重装：
+
+执行：
+
+cat > /etc/docker/daemon.json <<'EOF'
+{
+  "data-root": "/opt/docker",
+  "ipv6": false,
+  "ip6tables": false
+}
+EOF
+
+rm -rf /tmp/dockerd
+
+/etc/init.d/dockerd restart
+
+然后：
+
+mkdir -p /opt/cups/config /opt/cups/log /opt/cups/spool
+
+创建：
+
+docker run -d \
+--name cups \
+--restart always \
+--network host \
+--privileged \
+-e CUPSADMIN=admin \
+-e CUPSPASSWORD=admin \
+-v /opt/cups/config:/etc/cups \
+-v /opt/cups/log:/var/log/cups \
+-v /opt/cups/spool:/var/spool/cups \
+--device /dev/bus/usb:/dev/bus/usb \
+chuckcharlie/cups-avahi-airprint:latest
+
+
+
+
+
+
+
+
+本次踩坑记录
+1. Docker重启丢容器
+
+原因：
+
+错误：
+
+Docker Root Dir: /var/lib/docker
+
+实际：
+
+/tmp/lib/docker
+
+解决：
+
+改：
+
+/opt/docker
+2. docker pull EOF
+
+原因：
+
+Docker Hub访问不稳定。
+
+测试：
+
+curl -I https://registry-1.docker.io/v2/
+
+返回：
+
+HTTP/2 401
+
+说明网络正常。
+
+3. CUPS容器启动循环
+
+原因：
+
+第一次配置目录为空：
+
+/opt/cups/config
+
+镜像初始化脚本报：
+
+cp: can't stat /etc/cups/cupsd.conf
+
+重新启动后正常。
+
+当前最终状态
+
+✅ Docker持久化
+✅ Docker Root Dir=/opt/docker
+✅ CUPS运行
+✅ Canon G3000识别
+✅ AirPrint支持
+✅ 重启自动恢复
+✅ 配置独立保存
+
+
