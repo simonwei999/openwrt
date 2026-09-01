@@ -53,6 +53,16 @@ nft list chain inet fw4 accept_to_lan
 oifname "br-lan" counter packets ... accept
 这表示允许 Tailscale 流量转发到 LAN 接口 br-lan。
 
+如果以上不行，按照下面来
+这是确保流量能从 Tailscale 网卡流向 LAN 口的关键：
+ 1. **新建接口：** “网络” -> “接口” -> “添加新接口”。
+   * 名称：tailscale | 协议：不配置协议 | 设备：tailscale0。
+ 2. **加入区域：** “网络” -> “防火墙” -> “区域设置”。
+   * 找到 **lan** 区域，点击“修改”。
+   * 在“涵盖的接口”中，勾选你刚创建的 **tailscale**。
+   * 确认“转发”为 **接受 (accept)**。
+ 3. **保存并应用。**
+
 八、检查局域网和 LuCI
 检查 ImmortalWrt 自己访问 LAN：执行
 ping -c 3 192.168.5.1
