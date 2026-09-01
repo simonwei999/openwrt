@@ -1,0 +1,87 @@
+目标：让 ImmortalWrt 运行 Tailscale，并通过 Tailscale 访问局域网 192.168.5.0/24，包括 192.168.5.1。
+一、安装 Tailscale
+SSH 登录 ImmortalWrt 后执行：
+opkg update
+opkg install tailscale
+检查版本：
+tailscale version
+二、启动并设置开机启动
+/etc/init.d/tailscale enable
+/etc/init.d/tailscale start
+登录 Tailscale：
+tailscale up
+根据终端显示的链接，在浏览器完成登录授权。
+三、确认 Tailscale 正常运行
+tailscale status
+tailscale ip
+四、开启 IPv4 转发
+sysctl -w net.ipv4.ip_forward=1
+sysctl net.ipv4.ip_forward
+应看到：net.ipv4.ip_forward = 1
+为了重启后仍然有效：
+echo 'net.ipv4.ip_forward=1' >> /etc/sysctl.conf
+sysctl -p
+五、发布局域网子网路由
+发布 192.168.5.0/24：
+tailscale set --advertise-routes=192.168.5.0/24
+检查：
+tailscale debug prefs | grep -A5 AdvertiseRoutes
+应看到 192.168.5.0/24。
+六、在 Tailscale 管理后台批准路由
+登录 Tailscale 管理后台，找到 ImmortalWrt，在 Subnet routes / Routes 中找到 192.168.5.0/24，并启用/批准该路由。
+注意：仅在 ImmortalWrt 上执行 advertise-routes 不等于其他设备已经可以使用该路由；管理后台批准是关键步骤。
+七、检查 ImmortalWrt 防火墙
+检查 Tailscale → LAN：
+nft list chain inet fw4 forward_tailscale
+正常应包含类似：
+jump accept_to_lan
+ct status dnat accept
+jump accept_to_tailscale
+继续检查：
+nft list chain inet fw4 accept_to_lan
+正常应包含类似：
+oifname "br-lan" counter packets ... accept
+这表示允许 Tailscale 流量转发到 LAN 接口 br-lan。
+八、检查局域网和 LuCI
+检查 ImmortalWrt 自己访问 LAN：
+ping -c 3 192.168.5.1
+检查 LuCI：
+wget -O - http://192.168.5.1/ 2>&1 | head -20
+检查 80/443 监听：
+netstat -lntp | grep -E ':80 |:443 '
+九、手机端测试
+手机打开 Tailscale，确认 ImmortalWrt Online，然后连接 Tailscale。浏览器访问：
+http://192.168.5.1
+能够打开 LuCI 即表示 Tailscale → ImmortalWrt → LAN 的主要链路正常。
+十、以后排错优先执行这些命令
+tailscale status
+tailscale debug prefs | grep -A5 AdvertiseRoutes
+nft list chain inet fw4 forward_tailscale
+nft list chain inet fw4 accept_to_lan
+ping -c 3 192.168.5.1
+netstat -lntp | grep -E ':80 |:443 '
+十一、全新安装最简命令清单
+opkg update
+opkg install tailscale
+/etc/init.d/tailscale enable
+/etc/init.d/tailscale start
+tailscale up
+sysctl -w net.ipv4.ip_forward=1
+echo 'net.ipv4.ip_forward=1' >> /etc/sysctl.conf
+sysctl -p
+tailscale set --advertise-routes=192.168.5.0/24
+tailscale debug prefs | grep -A5 AdvertiseRoutes
+nft list chain inet fw4 forward_tailscale
+nft list chain inet fw4 accept_to_lan
+ping -c 3 192.168.5.1
+wget -O - http://192.168.5.1/ 2>&1 | head -20
+十二、重启后的验证
+配置完成后可以执行 reboot 测试。重启后检查：
+tailscale status
+tailscale debug prefs | grep -A5 AdvertiseRoutes
+确认仍有 192.168.5.0/24，然后用手机访问 http://192.168.5.1。
+十三、重要说明
+1. 192.168.5.0/24 是本次实际使用的 LAN 网段；如果以后 LAN 网段改变，需要同步修改 advertise-routes。
+2. Tailscale 子网路由与 Docker/CUPS 是独立配置，不需要为了 Tailscale 修改 Docker。
+3. tailscale0 上是否直接显示 IPv4 地址不能单独作为判断 Tailscale 是否正常的依据，应结合 tailscale status、路由状态、防火墙和客户端实际访问结果判断。
+4. 防火墙的关键方向是 Tailscale → LAN（br-lan）。
