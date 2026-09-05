@@ -11,6 +11,7 @@ USB 打印机：Canon G3000 series
 Docker 镜像：
 chuckcharlie/cups-avahi-airprint:latest
 
+simonwei999/cups-avahi-airprint:v1
 目标：
 ImmortalWrt 作为打印服务器
 支持：
